@@ -63,7 +63,7 @@ async def fetch_news(ctx, *, query: str = None):
                 prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc}"
                 try:
                     response = model.generate_content(prompt)
-                    await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗")
+                    await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')}")
 
                 except Exception as e:
                     await ctx.send(f"Błąd podczas redagowania: {e}")
