@@ -1,4 +1,5 @@
-# 🤖 Newser - Discord News Bot
+![newserLogo](https://github.com/user-attachments/assets/63a360cd-09de-440a-9874-883b8917779a)
+# 🤖!Newser - Discord News Bot
 
 Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://newsdata.io) i umożliwia ich redakcję za pomocą AI (Google Gemini). Użytkownicy mogą także zapisywać ulubione artykuły i przeglądać je później.
 
