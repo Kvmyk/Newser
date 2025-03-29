@@ -10,7 +10,7 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 - `!news redaguj <temat>` – Redaguje wiadomość za pomocą AI i dodaje link do źródła
 - `!news redaguj <numer>` – Redaguje wiadomość z ostatnio wyświetlonych wyników (1–3)
 - `!news dodaj <numer>` – Dodaje wskazaną wiadomość do ulubionych
-- `!news ulubione` / `!news readFav` – Wyświetla ulubione wiadomości
+- `!news ulubione` – Wyświetla ulubione wiadomości
 - `!news help` – Wyświetla pomoc i instrukcję użycia
 
 ---
