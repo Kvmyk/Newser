@@ -2,7 +2,7 @@
 name = "discord-news-bot"
 version = "0.1.0"
 description = "Bot Discordowy pobierający i redagujący wiadomości z NewsData.io"
-authors = ["Twoje Imię <email@example.com>"]
+authors = ["Jakub Kamionka, kuba@kamionka.eu"]
 license = "MIT"
 
 [tool.poetry.dependencies]
