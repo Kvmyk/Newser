@@ -38,7 +38,7 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 
 4. **Uruchom bota**
    ```bash
-   python bot.py
+   python newser.py
    ```
 
 ---
