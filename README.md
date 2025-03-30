@@ -1,4 +1,3 @@
-
 ![NEWSER-LOGOpng](https://github.com/user-attachments/assets/dc38e2ed-4970-45d8-b8a7-93e7aa7a459a)
 🤖Newser - Discord News Bot
 
