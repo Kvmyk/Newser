@@ -20,7 +20,7 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 
 1. **Sklonuj repozytorium**
    ```bash
-   git clone https://github.com/Newser.git
+   git clone https://github.com/Kvmyk/Newser.git
    cd Newser
    ```
 
