@@ -20,8 +20,8 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 
 1. **Sklonuj repozytorium**
    ```bash
-   git clone https://github.com/twoja-nazwa/newser-bot.git
-   cd newser-bot
+   git clone https://github.com/Newser.git
+   cd Newser
    ```
 
 2. **Utwórz plik `.env`** w katalogu `newser-bot` z taką zawartością:
