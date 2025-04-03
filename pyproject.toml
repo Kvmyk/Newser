@@ -1,17 +1,24 @@
 [tool.poetry]
-name = "discord-news-bot"
+name = "newser"
 version = "0.1.0"
-description = "Bot Discordowy pobierający i redagujący wiadomości z NewsData.io"
-authors = ["Jakub Kamionka, kuba@kamionka.eu"]
+description = "Discord bot for fetching and editing news using AI."
+authors = ["Jakub Kamionka <your_email@example.com>"]
 license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/Kvmyk/Newser"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-discord.py = "^2.3.2"
+python = "^3.9"
+discord = "^2.3.2"
 requests = "^2.31.0"
 python-dotenv = "^1.0.1"
 google-generativeai = "^0.3.2"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-asyncio = "^0.21.0"
+flake8 = "^6.1.0"
+
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
