@@ -145,7 +145,7 @@ async def edit_news(ctx, query):
         desc = articles[0].get('description', '')
         link = articles[0].get('link', '')
 
-        prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc}"
+        prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Wypisz tylko wersję krótką i chwytliwą."
         response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
 
