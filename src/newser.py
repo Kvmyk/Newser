@@ -13,7 +13,7 @@ GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel(model_name="models/gemini-2.0-flash")
+model = genai.GenerativeModel(model_name="models/gemini-2.0")
 
 # Intencje i prefiks
 intents = discord.Intents.default()
@@ -70,10 +70,10 @@ async def fetch_news(ctx, *, query: str = None):
                 article = articles[index - 1]
                 title = article.get('title', '')
                 desc = article.get('description', '')
-                prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc}"
+                prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Wypisz tylko wersję krótką i chwytliwą."
                 try:
-                    response = model.generate_content(prompt)
-                    await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')}")
+                    response = model.generate_content(prompt, max_tokens=1500, temperature=0.5)
+                    await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')} \n")
 
                 except Exception as e:
                     await ctx.send(f"Błąd podczas redagowania: {e}")
@@ -146,7 +146,7 @@ async def edit_news(ctx, query):
         link = articles[0].get('link', '')
 
         prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Wypisz tylko wersję krótką i chwytliwą."
-        response = model.generate_content(prompt)
+        response = model.generate_content(prompt, max_tokens=1500, temperature=0.5)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
 
 
