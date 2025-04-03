@@ -13,7 +13,7 @@ GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel(model_name="models/gemini-2.5-pro")
+model = genai.GenerativeModel(model_name="models/gemini-1.5-pro-002")
 
 # Intencje i prefiks
 intents = discord.Intents.default()
