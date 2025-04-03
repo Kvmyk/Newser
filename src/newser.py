@@ -72,7 +72,7 @@ async def fetch_news(ctx, *, query: str = None):
                 desc = article.get('description', '')
                 prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Wypisz tylko wersję krótką i chwytliwą."
                 try:
-                    response = model.generate_content(prompt, max_output_tokens=1000, temperature=0.5)
+                    response = model.generate_content(prompt)
                     await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')} \n")
 
                 except Exception as e:
@@ -146,7 +146,7 @@ async def edit_news(ctx, query):
         link = articles[0].get('link', '')
 
         prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Wypisz tylko wersję krótką i chwytliwą."
-        response = model.generate_content(prompt, max_tokens=1500, temperature=0.5)
+        response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
 
 
