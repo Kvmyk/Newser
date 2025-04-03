@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM python:3.13-slim as builder
+FROM python:3.11-slim as builder
 
 # Ustawienie zmiennych środowiskowych dla Pythona
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -15,14 +15,15 @@ RUN apt-get update && \
 
 # Kopiowanie tylko plików potrzebnych do instalacji zależności
 COPY pyproject.toml .
+COPY poetry.lock* ./ 
 
 # Instalacja zależności
 RUN pip install --no-cache-dir poetry && \
     poetry config virtualenvs.create false && \
-    poetry install --no-dev --no-interaction --no-ansi
+    poetry install
 
 # Stage 2: Runtime
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 # Ustawienie zmiennych środowiskowych
 ENV PYTHONDONTWRITEBYTECODE=1 \
