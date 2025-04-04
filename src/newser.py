@@ -13,7 +13,7 @@ GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel(model_name="models/gemini-1.5-pro-002")
+model = genai.GenerativeModel(model_name="models/gemini-2.0-flash-001")
 
 # Intencje i prefiks
 intents = discord.Intents.default()
@@ -69,8 +69,8 @@ async def fetch_news(ctx, *, query: str = None):
             if 1 <= index <= len(articles):
                 article = articles[index - 1]
                 title = article.get('title', '')
-                desc = article.get('description', '')
-                prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n Opisz to w max 3 zdaniach."
+                content = article.get('content', '')
+                prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie"
                 try:
                     response = model.generate_content(prompt)
                     await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')} \n")
@@ -142,10 +142,9 @@ async def edit_news(ctx, query):
             return
 
         title = articles[0].get('title', '')
-        desc = articles[0].get('description', '')
         link = articles[0].get('link', '')
-
-        prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny sposób:\nTytuł: {title}\nOpis: {desc} \n. Opisz to w max 3 zdaniach."
+        content = articles[0].get('content', '')
+        prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n. Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie."
         response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
 
