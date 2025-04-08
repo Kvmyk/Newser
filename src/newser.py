@@ -18,7 +18,11 @@ model = genai.GenerativeModel(model_name="models/gemini-2.0-flash-001")
 # Intencje i prefiks
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(
+    command_prefix='!', 
+    intents=intents,
+    heartbeat_timeout=60.0
+)
 
 # Pamięć ulubionych wiadomości (tymczasowo w RAM)
 favorites = {}
@@ -41,25 +45,39 @@ async def handle_help(ctx):
 `!news usun <numer>` - Usuń wskazaną wiadomość z listy ulubionych.
 """)
 
+async def edit_article(ctx, article):
+    """Helper function to edit a single article using AI"""
+    title = article.get('title', '')
+    content = article.get('content', '')
+    link = article.get('link', '')
+    prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie"
+    try:
+        response = model.generate_content(prompt)
+        await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
+    except Exception as e:
+        await ctx.send(f"Błąd podczas redagowania: {e}")
+
 async def handle_edit(ctx, clean_query):
     if clean_query.isdigit():
         index = int(clean_query)
         user_id = str(ctx.author.id)
         articles = last_articles.get(user_id, [])
         if 1 <= index <= len(articles):
-            article = articles[index - 1]
-            title = article.get('title', '')
-            content = article.get('content', '')
-            prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie"
-            try:
-                response = model.generate_content(prompt)
-                await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {article.get('link', '')} \n")
-            except Exception as e:
-                await ctx.send(f"Błąd podczas redagowania: {e}")
+            await edit_article(ctx, articles[index - 1])
         else:
             await ctx.send("Nieprawidłowy numer wiadomości do redakcji.")
     else:
-        await edit_news(ctx, clean_query)
+        url = f"https://newsdata.io/api/1/news?apikey={NEWSDATA_API_KEY}&q={clean_query}&language=pl"
+        try:
+            response = requests.get(url)
+            data = response.json()
+            articles = data.get('results', [])[:1]
+            if not articles:
+                await ctx.send("Brak wyników do redakcji.")
+                return
+            await edit_article(ctx, articles[0])
+        except Exception as e:
+            await ctx.send(f"Błąd podczas redakcji: {e}")
 
 async def handle_favorites(ctx):
     user_id = str(ctx.author.id)
@@ -72,7 +90,7 @@ async def handle_favorites(ctx):
 @bot.command(name='news')
 async def fetch_news(ctx, *, query: str = None):
     if not query:
-        await ctx.send("Użycie: `!news <temat>` | `!news <temat> [liczba]` | `!news help` | `!news redaguj` | `!news ulubione` | `!news dodaj <numer>` | `!news readFav` | `!news redaguj <numer>`")
+        await ctx.send("Użycie: `!news <temat>` | `!news <temat> [liczba]` | `!news help` | `!news redaguj` | `!news ulubione` | `!news dodaj <numer>` | `!news usun <numer>`")
         return
 
     command_handlers = {
@@ -138,27 +156,6 @@ async def fetch_and_send_news(ctx, query):
 
     except Exception as e:
         await ctx.send(f"Błąd podczas pobierania danych: {e}")
-
-async def edit_news(ctx, query):
-    url = f"https://newsdata.io/api/1/news?apikey={NEWSDATA_API_KEY}&q={query}&language=pl"
-    try:
-        response = requests.get(url)
-        data = response.json()
-        articles = data.get('results', [])[:1]
-        if not articles:
-            await ctx.send("Brak wyników do redakcji.")
-            return
-
-        title = articles[0].get('title', '')
-        link = articles[0].get('link', '')
-        content = articles[0].get('content', '')
-        prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n. Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie."
-        response = model.generate_content(prompt)
-        await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
-
-
-    except Exception as e:
-        await ctx.send(f"Błąd podczas redakcji: {e}")
 
 @bot.command(name='fav')
 async def add_favorite(ctx, index: int):
