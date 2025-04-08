@@ -31,7 +31,7 @@ last_articles = {}
 
 @bot.event
 async def on_ready():
-    print(f'Zalogowano jako {bot.user.name}')
+    pass
 
 async def handle_help(ctx):
     await ctx.send("""
