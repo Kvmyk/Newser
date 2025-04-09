@@ -31,7 +31,7 @@ last_articles = {}
 
 @bot.event
 async def on_ready():
-    pass
+    print("Zalogowano jako Newser")
 
 async def handle_help(ctx):
     await ctx.send("""
@@ -39,7 +39,7 @@ async def handle_help(ctx):
 `!news <temat>` - Wyszukaj najnowsze wiadomości na dany temat (domyślnie 3 artykuły).
 `!news <temat> [liczba]` - Wyszukaj określoną liczbę wiadomości (1-10) na dany temat.
 `!news redaguj <temat>` - Pobierz wiadomości i zredaguj ich treść za pomocą AI.
-`!news redaguj <numer>` - Zredaguj wiadomość z ostatnio wyświetlonych wyników (1-3).
+`!news redaguj <numer>` - Zredaguj wiadomość z ostatnio wyświetlonych wyników.
 `!news ulubione` - Zobacz swoje zapisane ulubione wiadomości.
 `!news dodaj <numer>` - Dodaj wskazaną wiadomość z listy do ulubionych.
 `!news usun <numer>` - Usuń wskazaną wiadomość z listy ulubionych.
