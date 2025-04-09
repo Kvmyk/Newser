@@ -181,5 +181,5 @@ async def remove_favorite(ctx, index: int):
     else:
         await ctx.send("Nieprawidłowy numer wiadomości lub brak ulubionych.")
 
-# Uruchom bota
-bot.run(DISCORD_TOKEN)
+if __name__ == "__main__":
+    bot.run(DISCORD_TOKEN)
