@@ -50,7 +50,7 @@ async def edit_article(ctx, article):
     title = article.get('title', '')
     content = article.get('content', '')
     link = article.get('link', '')
-    prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie"
+    prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie. Nie dodawaj żadnych wzmianek o subskrypcjach, płatnościach ani innych dodatkowych usługach."
     try:
         response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
