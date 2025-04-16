@@ -1,87 +1,58 @@
 trigger:
   - main
+  - develop
 
 variables:
   pythonVersion: '3.12'
-  imageName: 'newser-discord-bot'
+  dockerImageName: 'newser-bot'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  tag: '$(Build.BuildId)'
 
 stages:
-- stage: Test
-  displayName: 'Run Tests'
-  jobs:
-  - job: TestJob
-    displayName: 'Run Pytest'
-    pool:
-      name: Default # Use your self-hosted agent pool name
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(pythonVersion)'
-        addToPath: true
-      displayName: 'Use Python $(pythonVersion)'
-    
-    - script: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-      displayName: 'Install dependencies'
-    
-    - script: |
-        python -m pytest tests/ -v
-      displayName: 'Run pytest'
+  - stage: Test
+    displayName: 'Run Tests'
+    jobs:
+      - job: RunPytest
+        displayName: 'Run Pytest'
+        pool:
+          name: 'Default'  # używamy self-hosted agenta
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+              addToPath: true
+            displayName: 'Set up Python $(pythonVersion)'
 
-- stage: Build
-  displayName: 'Build Docker Image'
-  dependsOn: Test
-  condition: succeeded()
-  jobs:
-  - job: BuildDocker
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            displayName: 'Install dependencies'
+
+          - script: |
+              pytest
+            displayName: 'Run pytest'
+
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/test-results.xml'
+            condition: succeededOrFailed()
+            displayName: 'Publish test results'
+
+  - stage: Build
     displayName: 'Build Docker Image'
-    pool:
-      name: Default # Use your self-hosted agent pool name
-    steps:
-    - task: Docker@2
-      displayName: 'Build Docker image'
-      inputs:
-        command: 'build'
-        Dockerfile: 'Dockerfile'
-        buildContext: '.'
-        tags: |
-          $(imageName):$(Build.BuildId)
-          $(imageName):latest
-
-- stage: DeployEnvironment
-  displayName: 'Create Environment'
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - job: SetupEnvironment
-    displayName: 'Setup Runtime Environment'
-    pool:
-      name: Default # Use your self-hosted agent pool name
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(pythonVersion)'
-        addToPath: true
-      displayName: 'Use Python $(pythonVersion)'
-    
-    - script: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-      displayName: 'Install dependencies'
-    
-    - script: |
-        echo "Environment is ready for running the Newser bot"
-        echo "To run locally: python src/newser.py"
-        echo "To run in Docker: docker run $(imageName):latest"
-      displayName: 'Environment Info'
-
-    # This step creates a .env file from pipeline variables
-    # Configure these secure variables in your Azure DevOps pipeline settings
-    - script: |
-        echo "DISCORD_TOKEN=$(DISCORD_TOKEN)" > .env
-        echo "NEWSDATA_API_KEY=$(NEWSDATA_API_KEY)" >> .env
-        echo "GOOGLE_API_KEY=$(GOOGLE_API_KEY)" >> .env
-      displayName: 'Create .env file'
-      # Set condition to true once you add these variables to your pipeline
-      condition: false
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: DockerBuild
+        displayName: 'Build Docker Image'
+        pool:
+          name: 'Default'  # używamy self-hosted agenta
+        steps:
+          - task: Docker@2
+            inputs:
+              command: 'build'
+              dockerfile: '$(dockerfilePath)'
+              tags: |
+                $(tag)
+            displayName: 'Build Docker Image'
