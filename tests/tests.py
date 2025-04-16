@@ -25,9 +25,9 @@ async def test_fetch_news_with_topic():
     mock_response = MagicMock()
     mock_response.json.return_value = {
         'results': [
-            {'title': 'Test News 1', 'link': 'http://test1.com'},
-            {'title': 'Test News 2', 'link': 'http://test2.com'},
-            {'title': 'Test News 3', 'link': 'http://test3.com'}
+            {'title': 'Test News 1', 'link': 'https://www.gazeta.pl/wiadomosci/7,114884,30675821,polityka-zagraniczna.html'},
+            {'title': 'Test News 2', 'link': 'https://www.onet.pl/informacje/onetwiadomosci/gospodarka-wzrost-inflacji/qm6j3kl'},
+            {'title': 'Test News 3', 'link': 'https://www.rmf24.pl/tylko-w-rmf24/wywiady/news-minister-sportu-o-planach-na-przyszlosc,nId,7312654'}
         ]
     }
     
@@ -78,7 +78,7 @@ async def test_fetch_news_with_redaguj():
     mock_response = MagicMock()
     mock_response.json.return_value = {
         'results': [
-            {'title': 'Test News 1', 'content': 'Test content', 'link': 'http://test1.com'}
+            {'title': 'Test News 1', 'content': 'Test content', 'link': 'https://www.wprost.pl/kraj/11334507/debata-polityczna-w-sejmie.html'}
         ]
     }
     
@@ -91,7 +91,7 @@ async def test_fetch_news_with_redaguj():
         # Verify the edit was processed
         ctx.send.assert_called_once()
         assert "Zredagowana wersja:" in ctx.send.call_args[0][0]
-        assert "http://test1.com" in ctx.send.call_args[0][0]
+        assert "https://www.wprost.pl/kraj/11334507/debata-polityczna-w-sejmie.html" in ctx.send.call_args[0][0]
 
 @pytest.mark.asyncio
 async def test_add_favorite():
@@ -102,8 +102,8 @@ async def test_add_favorite():
     # Setup test data
     from src.newser import last_articles, favorites
     last_articles[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'link': 'http://test1.com'},
-        {'title': 'Test News 2', 'link': 'http://test2.com'}
+        {'title': 'Test News 1', 'link': 'https://www.money.pl/gospodarka/pkb-polski-wzrost-2023,263,0,2526789.html'},
+        {'title': 'Test News 2', 'link': 'https://www.tvn24.pl/wiadomosci-ze-swiata,2/kolejne-rozmowy-pokojowe,1280564.html'}
     ]
     
     await add_favorite(ctx, 1)
@@ -124,7 +124,7 @@ async def test_add_favorite_invalid_index():
     # Setup test data
     from src.newser import last_articles
     last_articles[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'link': 'http://test1.com'}
+        {'title': 'Test News 1', 'link': 'https://www.interia.pl/biznes/news-nowe-inwestycje-w-przemysle,nId,7098442'}
     ]
     
     await add_favorite(ctx, 2)  # Invalid index
@@ -171,8 +171,8 @@ async def test_handle_favorites_with_items():
     # Setup test data
     from src.newser import favorites
     favorites[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'link': 'http://test1.com'},
-        {'title': 'Test News 2', 'link': 'http://test2.com'}
+        {'title': 'Test News 1', 'link': 'https://www.rp.pl/polityka/art39087981-nowy-projekt-ustawy'},
+        {'title': 'Test News 2', 'link': 'https://www.newsweek.pl/polska/spoleczenstwo/reforma-edukacji-2023/4n8xjlp'}
     ]
     
     await handle_favorites(ctx)
@@ -191,7 +191,7 @@ async def test_handle_edit_with_number():
     # Setup test data
     from src.newser import last_articles
     last_articles[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'content': 'Test content 1', 'link': 'http://test1.com'}
+        {'title': 'Test News 1', 'content': 'Test content 1', 'link': 'https://www.polsatnews.pl/wiadomosc/2023-05-12/nowe-regulacje-prawne-w-unii-europejskiej'}
     ]
     
     # Mock the Gemini model response
@@ -202,7 +202,7 @@ async def test_handle_edit_with_number():
         # Verify the edit was processed
         ctx.send.assert_called_once()
         assert "Zredagowana wersja:" in ctx.send.call_args[0][0]
-        assert "http://test1.com" in ctx.send.call_args[0][0]
+        assert "https://www.polsatnews.pl/wiadomosc/2023-05-12/nowe-regulacje-prawne-w-unii-europejskiej" in ctx.send.call_args[0][0]
 
 @pytest.mark.asyncio
 async def test_handle_edit_invalid_number():
@@ -213,7 +213,7 @@ async def test_handle_edit_invalid_number():
     # Setup test data
     from src.newser import last_articles
     last_articles[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'content': 'Test content 1', 'link': 'http://test1.com'}
+        {'title': 'Test News 1', 'content': 'Test content 1', 'link': 'https://www.wnp.pl/finanse/nowe-dane-gospodarcze-analiza,673259.html'}
     ]
     
     await handle_edit(ctx, "2")  # Invalid index
@@ -230,8 +230,8 @@ async def test_remove_favorite():
     # Setup test data
     from src.newser import favorites
     favorites[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'link': 'http://test1.com'},
-        {'title': 'Test News 2', 'link': 'http://test2.com'}
+        {'title': 'Test News 1', 'link': 'https://www.pb.pl/technologie/rozwoj-sztucznej-inteligencji-w-polsce,1548321'},
+        {'title': 'Test News 2', 'link': 'https://www.naukawpolsce.pl/aktualnosci/news,96325,nowe-odkrycie-polskich-archeologow.html'}
     ]
     
     await remove_favorite(ctx, 1)
@@ -251,10 +251,10 @@ async def test_remove_favorite_invalid_index():
     # Setup test data
     from src.newser import favorites
     favorites[str(ctx.author.id)] = [
-        {'title': 'Test News 1', 'link': 'http://test1.com'}
+        {'title': 'Test News 1', 'link': 'https://www.pap.pl/aktualnosci/raport-ekonomiczny-2023-zdrowie-gospodarki'}
     ]
     
     await remove_favorite(ctx, 2)  # Invalid index
     
     # Verify error message was sent
-    ctx.send.assert_called_once_with("Nieprawidłowy numer wiadomości lub brak ulubionych.") 
+    ctx.send.assert_called_once_with("Nieprawidłowy numer wiadomości lub brak ulubionych.")
