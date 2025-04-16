@@ -1,29 +1,103 @@
-# Docker
-# Build a Docker image
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+# Newser Discord Bot - CI/CD Pipeline
 
 trigger:
-- main
+  - main
+  - develop
 
-resources:
-- repo: self
+pr:
+  - main
+  - develop
 
 variables:
-  tag: '$(Build.BuildId)'
+  pythonVersion: '3.12'
+  dockerImageName: 'newser-bot'
+  dockerRegistryServiceConnection: 'your-registry-connection'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  # Define variables for different environments
+  ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    tag: 'latest'
+    environment: 'production'
+  ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    tag: 'dev'
+    environment: 'staging'
+  ${{ if not(or(eq(variables['Build.SourceBranchName'], 'main'), eq(variables['Build.SourceBranchName'], 'develop'))) }}:
+    tag: '$(Build.BuildId)'
+    environment: 'development'
 
 stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-      inputs:
-        command: build
-        dockerfile: '$(Build.SourcesDirectory)/Dockerfile'
-        tags: |
-          $(tag)
+  - stage: Test
+    displayName: 'Run Tests'
+    jobs:
+      - job: TestCode
+        displayName: 'Run Python Tests'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+              addToPath: true
+            displayName: 'Set up Python $(pythonVersion)'
+          
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            displayName: 'Install Dependencies'
+          
+          - script: |
+              pytest tests/ --junitxml=junit/test-results.xml
+            displayName: 'Run Tests'
+            
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/test-results.xml'
+              testRunTitle: 'Python Tests'
+            displayName: 'Publish Test Results'
+            condition: succeededOrFailed()
+
+  - stage: Build
+    displayName: 'Build Docker Image'
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: BuildImage
+        displayName: 'Build and Push Docker Image'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Docker@2
+            displayName: 'Build Docker Image'
+            inputs:
+              command: 'build'
+              dockerfile: '$(dockerfilePath)'
+              tags: |
+                $(tag)
+                $(Build.BuildId)
+          
+          # Optional: Push image to container registry
+          # Uncomment and configure if needed
+          # - task: Docker@2
+          #   displayName: 'Push Docker Image'
+          #   inputs:
+          #     command: 'push'
+          #     containerRegistry: '$(dockerRegistryServiceConnection)'
+          #     repository: '$(dockerImageName)'
+          #     tags: |
+          #       $(tag)
+          #       $(Build.BuildId)
+
+  # Optional Deployment Stage
+  # - stage: Deploy
+  #   displayName: 'Deploy to $(environment)'
+  #   dependsOn: Build
+  #   condition: succeeded()
+  #   jobs:
+  #     - deployment: DeployBot
+  #       displayName: 'Deploy Newser Bot'
+  #       environment: $(environment)
+  #       strategy:
+  #         runOnce:
+  #           deploy:
+  #             steps:
+  #               - script: echo "Add deployment steps here"
