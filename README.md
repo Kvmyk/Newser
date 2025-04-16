@@ -52,6 +52,11 @@ discord.py>=2.3.2
 requests>=2.31.0
 python-dotenv>=1.0.1
 google-generativeai>=0.3.2
+anyio
+pytest-asyncio
+pytest-trio
+pytest-twisted
+
 ```
 
 ---
@@ -67,7 +72,6 @@ google-generativeai>=0.3.2
 
 - Dane ulubionych wiadomości i ostatnich wyników są przechowywane tymczasowo w pamięci.
 - Po restarcie bota ulubione artykuły znikają.
-- Można łatwo dodać zapis do pliku `.json` lub bazy danych (np. SQLite) w przyszłości.
 
 ---
 
