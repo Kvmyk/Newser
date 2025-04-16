@@ -6,3 +6,4 @@ anyio
 pytest-asyncio
 pytest-trio
 pytest-twisted
+pytest
