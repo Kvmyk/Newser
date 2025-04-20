@@ -77,6 +77,19 @@ stages:
                 $(tag)
               repository: $(dockerImageName)
             displayName: 'Build Docker Image'
+          
+          - script: |
+              docker tag $(dockerImageName):$(tag) kuba7331/newser-bot:$(tag)
+            displayName: 'Tag Docker Image'
+
+          - task: Docker@2
+            inputs:
+              command: 'push'
+              containerRegistry: 'DockerRegistry'
+              repository: 'kuba7331/newser-bot'
+              tags: |
+                $(tag)
+            displayName: 'Push Docker Image to Registry'
 
   - stage: Deploy
     displayName: 'Deploy Application'
@@ -106,7 +119,7 @@ stages:
                     -e DISCORD_TOKEN=$(DISCORD_TOKEN) \
                     -e NEWSDATA_API_KEY=$(NEWSDATA_API_KEY) \
                     -e GOOGLE_API_KEY=$(GOOGLE_API_KEY) \
-                    $(dockerImageName):$(tag)
+                    kuba7331/newser-bot:$(tag)
                 fi
             env:
               DISCORD_TOKEN: $(DISCORD_TOKEN)

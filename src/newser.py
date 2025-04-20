@@ -9,7 +9,7 @@ import google.generativeai as genai
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 NEWSDATA_API_KEY = os.getenv("NEWSDATA_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
