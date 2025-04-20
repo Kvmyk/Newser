@@ -7,9 +7,9 @@ import google.generativeai as genai
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
-DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-NEWSDATA_API_KEY = os.getenv('NEWSDATA_API_KEY')
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+NEWSDATA_API_KEY = os.getenv("NEWSDATA_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -18,23 +18,22 @@ model = genai.GenerativeModel(model_name="models/gemini-2.0-flash-001")
 # Intencje i prefiks
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(
-    command_prefix='!', 
-    intents=intents,
-    heartbeat_timeout=60.0
-)
+bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60.0)
 
 # Pamięć ulubionych wiadomości (tymczasowo w RAM)
 favorites = {}
 # Pamięć ostatnich wiadomości na użytkownika
 last_articles = {}
 
+
 @bot.event
 async def on_ready():
     print("Zalogowano jako Newser")
 
+
 async def handle_help(ctx):
-    await ctx.send("""
+    await ctx.send(
+        """
 **Pomoc - Komendy !news:**
 `!news <temat>` - Wyszukaj najnowsze wiadomości na dany temat (domyślnie 3 artykuły).
 `!news <temat> [liczba]` - Wyszukaj określoną liczbę wiadomości (1-10) na dany temat.
@@ -43,19 +42,22 @@ async def handle_help(ctx):
 `!news ulubione` - Zobacz swoje zapisane ulubione wiadomości.
 `!news dodaj <numer>` - Dodaj wskazaną wiadomość z listy do ulubionych.
 `!news usun <numer>` - Usuń wskazaną wiadomość z listy ulubionych.
-""")
+"""
+    )
+
 
 async def edit_article(ctx, article):
     """Helper function to edit a single article using AI"""
-    title = article.get('title', '')
-    content = article.get('content', '')
-    link = article.get('link', '')
+    title = article.get("title", "")
+    content = article.get("content", "")
+    link = article.get("link", "")
     prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie. Nie dodawaj żadnych wzmianek o subskrypcjach, płatnościach ani innych dodatkowych usługach."
     try:
         response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
     except Exception as e:
         await ctx.send(f"Błąd podczas redagowania: {e}")
+
 
 async def handle_edit(ctx, clean_query):
     if clean_query.isdigit():
@@ -71,13 +73,14 @@ async def handle_edit(ctx, clean_query):
         try:
             response = requests.get(url)
             data = response.json()
-            articles = data.get('results', [])[:1]
+            articles = data.get("results", [])[:1]
             if not articles:
                 await ctx.send("Brak wyników do redakcji.")
                 return
             await edit_article(ctx, articles[0])
         except Exception as e:
             await ctx.send(f"Błąd podczas redakcji: {e}")
+
 
 async def handle_favorites(ctx):
     user_id = str(ctx.author.id)
@@ -87,10 +90,13 @@ async def handle_favorites(ctx):
     else:
         await ctx.send("Nie masz jeszcze żadnych ulubionych wiadomości.")
 
-@bot.command(name='news')
+
+@bot.command(name="news")
 async def fetch_news(ctx, *, query: str = None):
     if not query:
-        await ctx.send("Użycie: `!news <temat>` | `!news <temat> [liczba]` | `!news help` | `!news redaguj` | `!news ulubione` | `!news dodaj <numer>` | `!news usun <numer>`")
+        await ctx.send(
+            "Użycie: `!news <temat>` | `!news <temat> [liczba]` | `!news help` | `!news redaguj` | `!news ulubione` | `!news dodaj <numer>` | `!news usun <numer>`"
+        )
         return
 
     command_handlers = {
@@ -103,16 +109,18 @@ async def fetch_news(ctx, *, query: str = None):
         return
 
     if query.lower().startswith("redaguj"):
-        clean_query = query[len("redaguj"):].strip()
+        clean_query = query[len("redaguj") :].strip()
         if not clean_query:
-            await ctx.send("Użycie: `!news redaguj <temat>` lub `!news redaguj <numer>`")
+            await ctx.send(
+                "Użycie: `!news redaguj <temat>` lub `!news redaguj <numer>`"
+            )
             return
         await handle_edit(ctx, clean_query)
         return
 
     if query.lower().startswith("dodaj"):
         try:
-            index = int(query[len("dodaj"):].strip())
+            index = int(query[len("dodaj") :].strip())
             await add_favorite(ctx, index)
         except ValueError:
             await ctx.send("Użycie: `!news dodaj <numer>`")
@@ -120,7 +128,7 @@ async def fetch_news(ctx, *, query: str = None):
 
     if query.lower().startswith("usun"):
         try:
-            index = int(query[len("usun"):].strip())
+            index = int(query[len("usun") :].strip())
             await remove_favorite(ctx, index)
         except ValueError:
             await ctx.send("Użycie: `!news usun <numer>`")
@@ -128,12 +136,13 @@ async def fetch_news(ctx, *, query: str = None):
 
     await fetch_and_send_news(ctx, query)
 
+
 async def fetch_and_send_news(ctx, query):
     # Sprawdź czy w zapytaniu jest liczba artykułów
     parts = query.split()
     if len(parts) > 1 and parts[-1].isdigit():
         article_count = min(max(1, int(parts[-1])), 10)  # Ogranicz do zakresu 1-10
-        search_query = ' '.join(parts[:-1])
+        search_query = " ".join(parts[:-1])
     else:
         article_count = 3  # Domyślna liczba artykułów
         search_query = query
@@ -142,22 +151,25 @@ async def fetch_and_send_news(ctx, query):
     try:
         response = requests.get(url)
         data = response.json()
-        articles = data.get('results', [])[:article_count]
+        articles = data.get("results", [])[:article_count]
         if not articles:
             await ctx.send("Brak wyników dla podanego zapytania.")
             return
 
         for i, article in enumerate(articles):
-            title = article.get('title', 'Brak tytułu')
-            link = article.get('link', '')
-            await ctx.send(f"🔖 **{title}**\n🔗 {link}\nDodaj do ulubionych: `!news dodaj {i+1}`")
+            title = article.get("title", "Brak tytułu")
+            link = article.get("link", "")
+            await ctx.send(
+                f"🔖 **{title}**\n🔗 {link}\nDodaj do ulubionych: `!news dodaj {i+1}`"
+            )
 
         last_articles[str(ctx.author.id)] = articles
 
     except Exception as e:
         await ctx.send(f"Błąd podczas pobierania danych: {e}")
 
-@bot.command(name='fav')
+
+@bot.command(name="fav")
 async def add_favorite(ctx, index: int):
     user_id = str(ctx.author.id)
     articles = last_articles.get(user_id, [])
@@ -165,13 +177,13 @@ async def add_favorite(ctx, index: int):
         fav = articles[index - 1]
         if user_id not in favorites:
             favorites[user_id] = []
-        favorites[user_id].append({
-            'title': fav.get('title', 'Brak tytułu'),
-            'link': fav.get('link', '')
-        })
+        favorites[user_id].append(
+            {"title": fav.get("title", "Brak tytułu"), "link": fav.get("link", "")}
+        )
         await ctx.send(f"Dodano do ulubionych: **{fav.get('title', '')}**")
     else:
         await ctx.send("Nieprawidłowy numer wiadomości.")
+
 
 async def remove_favorite(ctx, index: int):
     user_id = str(ctx.author.id)
@@ -180,6 +192,7 @@ async def remove_favorite(ctx, index: int):
         await ctx.send(f"Usunięto z ulubionych: **{removed_article.get('title', '')}**")
     else:
         await ctx.send("Nieprawidłowy numer wiadomości lub brak ulubionych.")
+
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
