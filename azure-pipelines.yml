@@ -77,15 +77,6 @@ stages:
                 $(tag)
               repository: $(dockerImageName)
             displayName: 'Build Docker Image'
-          
-          - task: Docker@2
-            inputs:
-              command: 'push'
-              containerRegistry: 'DockerRegistry'
-              repository: $(dockerImageName)
-              tags: |
-                $(tag)
-            displayName: 'Push Docker Image to Registry'
 
   - stage: Deploy
     displayName: 'Deploy Application'
