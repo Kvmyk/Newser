@@ -2,6 +2,20 @@ trigger:
   - main
   - develop
 
+parameters:
+  - name: buildImage
+    displayName: 'Build Docker Image'
+    type: boolean
+    default: true
+  - name: deployOperation
+    displayName: 'Deployment Operation'
+    type: string
+    default: 'Reinstall'
+    values:
+      - Install
+      - Uninstall
+      - Reinstall
+
 variables:
   pythonVersion: '3.12'
   dockerImageName: 'newser-bot'
@@ -12,8 +26,8 @@ stages:
   - stage: Test
     displayName: 'Run Tests'
     jobs:
-      - job: RunPytest
-        displayName: 'Run Pytest'
+      - job: RunTests
+        displayName: 'Run Tests'
         pool:
           name: 'Default'  # używamy self-hosted agenta
         steps:
@@ -26,11 +40,17 @@ stages:
           - script: |
               python -m pip install --upgrade pip
               pip install -r requirements.txt
+              pip install black
             displayName: 'Install dependencies'
 
           - script: |
               pytest
-            displayName: 'Run pytest'
+            displayName: 'Run unit tests'
+
+          - script: |
+              black --check .
+            displayName: 'Run code formatting check with black'
+            continueOnError: true
 
           - task: PublishTestResults@2
             inputs:
@@ -42,17 +62,62 @@ stages:
   - stage: Build
     displayName: 'Build Docker Image'
     dependsOn: Test
-    condition: succeeded()
+    condition: and(succeeded(), eq('${{ parameters.buildImage }}', true))
     jobs:
       - job: DockerBuild
         displayName: 'Build Docker Image'
         pool:
-          name: 'Default'  # używamy self-hosted agenta
+          name: 'Default'
         steps:
           - task: Docker@2
             inputs:
               command: 'build'
               dockerfile: '$(dockerfilePath)'
               tags: |
-                $(tag)
+                $(dockerImageName):$(tag)
+              repository: $(dockerImageName)
             displayName: 'Build Docker Image'
+          
+          - task: Docker@2
+            inputs:
+              command: 'push'
+              containerRegistry: 'DockerRegistry'
+              repository: $(dockerImageName)
+              tags: |
+                $(tag)
+            displayName: 'Push Docker Image to Registry'
+
+  - stage: Deploy
+    displayName: 'Deploy Application'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DeployContainer
+        displayName: 'Deploy Container'
+        pool:
+          name: 'Default'
+        steps:
+          - task: Bash@3
+            displayName: 'Deploy Docker Container'
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Logika wdrażania w zależności od wybranej operacji
+                if [ "${{ parameters.deployOperation }}" == "Uninstall" ] || [ "${{ parameters.deployOperation }}" == "Reinstall" ]; then
+                  echo "Stopping and removing existing container..."
+                  docker stop newser-bot || true
+                  docker rm newser-bot || true
+                fi
+                
+                if [ "${{ parameters.deployOperation }}" == "Install" ] || [ "${{ parameters.deployOperation }}" == "Reinstall" ]; then
+                  echo "Starting new container..."
+                  docker run -d --name newser-bot \
+                    -e DISCORD_TOKEN=$(DISCORD_TOKEN) \
+                    -e NEWSDATA_API_KEY=$(NEWSDATA_API_KEY) \
+                    -e GOOGLE_API_KEY=$(GOOGLE_API_KEY) \
+                    $(dockerImageName):$(tag)
+                fi
+            env:
+              DISCORD_TOKEN: $(DISCORD_TOKEN)
+              NEWSDATA_API_KEY: $(NEWSDATA_API_KEY)
+              GOOGLE_API_KEY: $(GOOGLE_API_KEY)
