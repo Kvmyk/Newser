@@ -17,7 +17,7 @@ parameters:
       - Reinstall
 
 variables:
-  pythonVersion: '3.12'
+  pythonVersion: '3.13'
   dockerImageName: 'newser-bot'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'

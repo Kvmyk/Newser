@@ -1,9 +1,9 @@
-FROM python:3.12 AS builder
+FROM python:3.13 AS builder
 WORKDIR /src
 COPY requirements.txt .
 RUN pip install --user --no-cache-dir -r requirements.txt
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 WORKDIR /src
 
 COPY --from=builder /root/.local /root/.local
