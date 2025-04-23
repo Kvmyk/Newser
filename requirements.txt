@@ -7,3 +7,4 @@ pytest-asyncio
 pytest-trio
 pytest-twisted
 pytest
+twisted
