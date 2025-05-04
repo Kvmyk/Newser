@@ -1,4 +1,15 @@
 import pytest
+import sqlite3
+import pathlib
+import os
+from datetime import datetime
+from src.db.database import (
+    init_db,
+    add_favorite_db,
+    get_favorites_db,
+    remove_favorite_db,
+    DB_DIR
+)
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.newser import (
     fetch_news,
@@ -7,6 +18,131 @@ from src.newser import (
     remove_favorite,
     add_favorite,
 )
+
+
+@pytest.fixture
+def test_db():
+    """Fixture tworzący tymczasową bazę danych do testów"""
+    test_db_dir = DB_DIR / "test"
+    test_db_dir.mkdir(exist_ok=True)
+    test_db_path = test_db_dir / "test_newser.db"
+    
+    init_db()
+    yield test_db_path
+    
+    if test_db_path.exists():
+        os.remove(test_db_path)
+
+
+@pytest.mark.asyncio
+async def test_database_article_operations(test_db):
+    """Test operacji na artykułach w bazie danych"""
+    user_id = "123456789"
+    
+    # Testowy artykuł z aktualną tematyką
+    test_article = {
+        "title": "Nowy procesor M3 Ultra - Apple prezentuje przełomową technologię",
+        "link": "https://www.apple.com/newsroom/2024/m3-ultra-announcement"
+    }
+    
+    # Dodanie artykułu
+    add_favorite_db(user_id, test_article["title"], test_article["link"])
+    
+    # Sprawdzenie czy artykuł został dodany
+    favorites = get_favorites_db(user_id)
+    assert len(favorites) == 1
+    assert favorites[0]["title"] == test_article["title"]
+    assert favorites[0]["link"] == test_article["link"]
+    
+    # Usunięcie artykułu
+    article_id = favorites[0]["id"]
+    assert remove_favorite_db(user_id, article_id) == True
+    
+    # Weryfikacja usunięcia
+    assert len(get_favorites_db(user_id)) == 0
+
+
+@pytest.mark.asyncio
+async def test_multiple_users_isolation(test_db):
+    """Test izolacji danych między użytkownikami"""
+    user1_id = "111222333"
+    user2_id = "444555666"
+    
+    # Dodanie artykułów dla różnych użytkowników
+    test_articles = {
+        user1_id: [
+            {
+                "title": "Przełom w technologii kwantowej - polski naukowiec na czele projektu",
+                "link": "https://www.nauka.gov.pl/aktualnosci/przelom-kwantowy-2024"
+            },
+            {
+                "title": "Nowa strategia cyberbezpieczeństwa UE na lata 2024-2030",
+                "link": "https://cybersecurity-europe.eu/strategy-2024"
+            }
+        ],
+        user2_id: [
+            {
+                "title": "SpaceX ogłasza pierwszą turystyczną misję na Marsa",
+                "link": "https://www.spacex.com/mars-mission-2024"
+            }
+        ]
+    }
+    
+    # Dodanie artykułów do bazy
+    for user_id, articles in test_articles.items():
+        for article in articles:
+            add_favorite_db(user_id, article["title"], article["link"])
+    
+    # Sprawdzenie izolacji danych
+    user1_favorites = get_favorites_db(user1_id)
+    user2_favorites = get_favorites_db(user2_id)
+    
+    assert len(user1_favorites) == 2
+    assert len(user2_favorites) == 1
+    assert "kwantowej" in user1_favorites[0]["title"]
+    assert "SpaceX" in user2_favorites[0]["title"]
+
+
+@pytest.mark.asyncio
+async def test_database_error_handling(test_db):
+    """Test obsługi błędów bazy danych"""
+    user_id = "999888777"
+    
+    # Test usuwania nieistniejącego artykułu
+    assert remove_favorite_db(user_id, 99999) == False
+    
+    # Test dodawania artykułu z nieprawidłowymi danymi
+    with pytest.raises(sqlite3.Error):
+        add_favorite_db(None, None, None)
+    
+    # Test pobierania dla nieistniejącego użytkownika
+    empty_favorites = get_favorites_db("nonexistent_user")
+    assert len(empty_favorites) == 0
+
+
+@pytest.mark.asyncio
+async def test_database_article_limits(test_db):
+    """Test limitów i wydajności bazy danych"""
+    user_id = "777666555"
+    
+    # Dodanie większej liczby artykułów
+    for i in range(100):
+        title = f"Artykuł testowy {i}: Najnowsze trendy w AI {i+1}/2024"
+        link = f"https://ai-news.com/trends-{i}-2024"
+        add_favorite_db(user_id, title, link)
+    
+    # Sprawdzenie poprawności zapisanych danych
+    favorites = get_favorites_db(user_id)
+    assert len(favorites) == 100
+    assert all("Artykuł testowy" in f["title"] for f in favorites)
+    
+    # Test wydajności usuwania
+    for favorite in favorites[:50]:
+        assert remove_favorite_db(user_id, favorite["id"]) == True
+    
+    # Weryfikacja pozostałych artykułów
+    remaining = get_favorites_db(user_id)
+    assert len(remaining) == 50
 
 
 @pytest.mark.asyncio
