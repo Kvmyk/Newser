@@ -302,6 +302,8 @@ async def test_add_favorite():
         },
     ]
 
+    init_db()
+
     # Usuń wszystkie dotychczasowe ulubione z bazy danych
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
