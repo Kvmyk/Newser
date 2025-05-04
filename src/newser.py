@@ -24,6 +24,9 @@ bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60.0)
 # Pamięć ostatnich wiadomości na użytkownika
 last_articles = {}
 
+# Słownik mapujący numery wyświetlane użytkownikowi na rzeczywiste ID z bazy danych
+favorite_id_mapping = {}
+
 
 @bot.event
 async def on_ready():
@@ -85,10 +88,17 @@ async def handle_favorites(ctx):
     """Wyświetla ulubione artykuły użytkownika pobrane z bazy danych"""
     user_id = str(ctx.author.id)
     favorites = get_favorites_db(user_id)
-
+    
+    # Tworzymy nowe mapowanie dla tego użytkownika
+    favorite_id_mapping[user_id] = {}
+    
     if favorites:
-        for item in favorites:
-            await ctx.send(f"{item['id']}. 🔖 **{item['title']}**\n🔗 {item['link']}")
+        # Wyświetlamy artykuły z numeracją od 1
+        for i, item in enumerate(favorites, 1):
+            # Zapisujemy mapowanie: numer wyświetlany -> ID z bazy
+            favorite_id_mapping[user_id][i] = item['id']
+            
+            await ctx.send(f"{i}. 🔖 **{item['title']}**\n🔗 {item['link']}")
     else:
         await ctx.send("Nie masz jeszcze żadnych ulubionych wiadomości.")
 
@@ -193,14 +203,27 @@ async def add_favorite(ctx, index: int):
 async def remove_favorite(ctx, index: int):
     """Usuwa artykuł z ulubionych z bazy danych"""
     user_id = str(ctx.author.id)
-
-    # Usuń z bazy danych używając ID rekordu
-    success = remove_favorite_db(user_id, index)
+    
+    # Sprawdź czy użytkownik ma zmapowane ID
+    if user_id not in favorite_id_mapping or index not in favorite_id_mapping[user_id]:
+        # Jeśli nie ma mapowania, odśwież listę i poinformuj użytkownika
+        await ctx.send("Odświeżanie listy ulubionych...")
+        await handle_favorites(ctx)
+        await ctx.send("Spróbuj ponownie z numerem z powyższej listy.")
+        return
+    
+    # Pobierz prawdziwe ID z bazy danych na podstawie numeru użytkownika
+    db_id = favorite_id_mapping[user_id][index]
+    
+    # Usuń z bazy danych używając rzeczywistego ID
+    success = remove_favorite_db(user_id, db_id)
 
     if success:
-        await ctx.send(f"Usunięto artykuł o ID {index} z ulubionych.")
+        await ctx.send(f"Usunięto artykuł numer {index} z ulubionych.")
+        # Odśwież listę ulubionych
+        await handle_favorites(ctx)
     else:
-        await ctx.send(f"Nie znaleziono artykułu o ID {index} w Twoich ulubionych.")
+        await ctx.send(f"Nie znaleziono artykułu numer {index} w Twoich ulubionych.")
 
 
 if __name__ == "__main__":
