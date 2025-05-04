@@ -7,8 +7,9 @@ from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
-from src.database import add_favorite_db, get_favorites_db, remove_favorite_db
+from src.database import add_favorite_db, get_favorites_db, remove_favorite_db, init_db
 
+init_db()
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
