@@ -366,6 +366,8 @@ async def test_handle_favorites_empty():
     ctx.author.id = 123
     user_id = str(ctx.author.id)
 
+    init_db()
+
     # Usuń wszystkie ulubione z bazy dla tego użytkownika
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
@@ -383,6 +385,8 @@ async def test_handle_favorites_with_items():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
+
+    init_db()
 
     # Usuń istniejące ulubione i dodaj testowe artykuły
     with sqlite3.connect(database.DB_PATH) as conn:
@@ -471,6 +475,8 @@ async def test_remove_favorite():
     ctx.author.id = 123
     user_id = str(ctx.author.id)
 
+    init_db()
+
     # Usuń istniejące ulubione i dodaj testowe artykuły
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
@@ -511,6 +517,8 @@ async def test_remove_favorite_invalid_index():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
+
+    init_db()
 
     # Usuń istniejące ulubione i dodaj testowy artykuł
     with sqlite3.connect(database.DB_PATH) as conn:
