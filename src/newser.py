@@ -4,7 +4,7 @@ from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
-from db import add_favorite_db, get_favorites_db, remove_favorite_db
+from src.db import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()

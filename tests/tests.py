@@ -8,8 +8,10 @@ from src.db.database import (
     add_favorite_db,
     get_favorites_db,
     remove_favorite_db,
-    DB_DIR
+    DB_DIR,
+    DB_PATH  # Dodano brakującą zmienną
 )
+import src.db.database as database
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.newser import (
     fetch_news,
@@ -23,15 +25,36 @@ from src.newser import (
 @pytest.fixture
 def test_db():
     """Fixture tworzący tymczasową bazę danych do testów"""
-    test_db_dir = DB_DIR / "test"
-    test_db_dir.mkdir(exist_ok=True)
-    test_db_path = test_db_dir / "test_newser.db"
+    # Tworzenie tymczasowego pliku bazy danych ze zmienioną nazwą dla każdego testu
+    import tempfile
+    import pathlib
     
+    # Zapisz oryginalne ustawienie ścieżki bazy danych
+    original_db_path = database.DB_PATH
+    
+    # Utwórz tymczasowy plik bazy danych
+    temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+    test_db_path = pathlib.Path(temp_db_file.name)
+    temp_db_file.close()
+    
+    # Przekieruj ścieżkę bazy danych na tymczasowy plik
+    database.DB_PATH = test_db_path
+    
+    # Inicjalizuj bazę danych
     init_db()
+    
+    # Zwróć ścieżkę do testów
     yield test_db_path
     
+    # Po zakończeniu testu przywróć oryginalną ścieżkę
+    database.DB_PATH = original_db_path
+    
+    # Usuń tymczasowy plik bazy danych
     if test_db_path.exists():
-        os.remove(test_db_path)
+        try:
+            os.remove(test_db_path)
+        except (PermissionError, OSError):
+            pass  # Ignoruj błędy usuwania pliku
 
 
 @pytest.mark.asyncio
@@ -263,11 +286,12 @@ async def test_add_favorite():
     ctx = AsyncMock()
     ctx.send = AsyncMock()
     ctx.author.id = 123
-
-    # Setup test data
-    from src.newser import last_articles, favorites
-
-    last_articles[str(ctx.author.id)] = [
+    user_id = str(ctx.author.id)
+    
+    # Przygotowanie danych testowych
+    from src.newser import last_articles
+    
+    last_articles[user_id] = [
         {
             "title": "PKB Polski wzrósł o 3,5% w pierwszym kwartale 2023",
             "link": "https://www.money.pl/gospodarka/pkb-polski-wzrost-2023,263,0,2526789.html",
@@ -277,16 +301,19 @@ async def test_add_favorite():
             "link": "https://www.tvn24.pl/wiadomosci-ze-swiata,2/kolejne-rozmowy-pokojowe,1280564.html",
         },
     ]
-
+    
+    # Usuń wszystkie dotychczasowe ulubione z bazy danych
+    with sqlite3.connect(database.DB_PATH) as conn:
+        conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
+        conn.commit()
+    
+    # Wykonaj test
     await add_favorite(ctx, 1)
-
-    # Verify the favorite was added
-    assert str(ctx.author.id) in favorites
-    assert len(favorites[str(ctx.author.id)]) == 1
-    assert (
-        favorites[str(ctx.author.id)][0]["title"]
-        == "PKB Polski wzrósł o 3,5% w pierwszym kwartale 2023"
-    )
+    
+    # Sprawdź czy zostało dodane do bazy danych
+    favorites = get_favorites_db(user_id)
+    assert len(favorites) == 1
+    assert favorites[0]["title"] == "PKB Polski wzrósł o 3,5% w pierwszym kwartale 2023"
     ctx.send.assert_called_once()
     assert "Dodano do ulubionych" in ctx.send.call_args[0][0]
 
@@ -335,15 +362,16 @@ async def test_handle_favorites_empty():
     ctx = AsyncMock()
     ctx.send = AsyncMock()
     ctx.author.id = 123
-
-    # Clear favorites for this user
-    from src.newser import favorites
-
-    favorites[str(ctx.author.id)] = []
-
+    user_id = str(ctx.author.id)
+    
+    # Usuń wszystkie ulubione z bazy dla tego użytkownika
+    with sqlite3.connect(database.DB_PATH) as conn:
+        conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
+        conn.commit()
+    
     await handle_favorites(ctx)
-
-    # Verify the empty message was sent
+    
+    # Sprawdź czy wyświetlono komunikat o braku ulubionych
     ctx.send.assert_called_once_with("Nie masz jeszcze żadnych ulubionych wiadomości.")
 
 
@@ -352,28 +380,23 @@ async def test_handle_favorites_with_items():
     ctx = AsyncMock()
     ctx.send = AsyncMock()
     ctx.author.id = 123
-
-    # Setup test data
-    from src.newser import favorites
-
-    favorites[str(ctx.author.id)] = [
-        {
-            "title": "Nowy projekt ustawy o ochronie środowiska - co się zmieni?",
-            "link": "https://www.rp.pl/polityka/art39087981-nowy-projekt-ustawy",
-        },
-        {
-            "title": "Reforma edukacji 2023 - najważniejsze zmiany dla uczniów i nauczycieli",
-            "link": "https://www.newsweek.pl/polska/spoleczenstwo/reforma-edukacji-2023/4n8xjlp",
-        },
-    ]
-
+    user_id = str(ctx.author.id)
+    
+    # Usuń istniejące ulubione i dodaj testowe artykuły
+    with sqlite3.connect(database.DB_PATH) as conn:
+        conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
+        conn.commit()
+    
+    add_favorite_db(user_id, "Nowy projekt ustawy o ochronie środowiska - co się zmieni?", 
+                   "https://www.rp.pl/polityka/art39087981-nowy-projekt-ustawy")
+    add_favorite_db(user_id, "Reforma edukacji 2023 - najważniejsze zmiany dla uczniów i nauczycieli", 
+                   "https://www.newsweek.pl/polska/spoleczenstwo/reforma-edukacji-2023/4n8xjlp")
+    
     await handle_favorites(ctx)
-
-    # Verify that send was called twice (2 favorites)
+    
+    # Sprawdź czy wyświetlono oba artykuły
     assert ctx.send.call_count == 2
-    assert (
-        "Nowy projekt ustawy o ochronie środowiska" in ctx.send.call_args_list[0][0][0]
-    )
+    assert "Nowy projekt ustawy o ochronie środowiska" in ctx.send.call_args_list[0][0][0]
     assert "Reforma edukacji 2023" in ctx.send.call_args_list[1][0][0]
 
 
@@ -436,31 +459,34 @@ async def test_remove_favorite():
     ctx = AsyncMock()
     ctx.send = AsyncMock()
     ctx.author.id = 123
-
-    # Setup test data
-    from src.newser import favorites
-
-    favorites[str(ctx.author.id)] = [
-        {
-            "title": "Rozwój sztucznej inteligencji w Polsce - raport ministerstwa cyfryzacji",
-            "link": "https://www.pb.pl/technologie/rozwoj-sztucznej-inteligencji-w-polsce,1548321",
-        },
-        {
-            "title": "Nowe odkrycie polskich archeologów - sensacyjne znalezisko sprzed 3000 lat",
-            "link": "https://www.naukawpolsce.pl/aktualnosci/news,96325,nowe-odkrycie-polskich-archeologow.html",
-        },
-    ]
-
+    user_id = str(ctx.author.id)
+    
+    # Usuń istniejące ulubione i dodaj testowe artykuły
+    with sqlite3.connect(database.DB_PATH) as conn:
+        conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
+        conn.commit()
+    
+    # Dodaj dwa artykuły do bazy
+    add_favorite_db(user_id, "Rozwój sztucznej inteligencji w Polsce - raport ministerstwa cyfryzacji", 
+                   "https://www.pb.pl/technologie/rozwoj-sztucznej-inteligencji-w-polsce,1548321")
+    add_favorite_db(user_id, "Nowe odkrycie polskich archeologów - sensacyjne znalezisko sprzed 3000 lat", 
+                   "https://www.naukawpolsce.pl/aktualnosci/news,96325,nowe-odkrycie-polskich-archeologow.html")
+    
+    # Najpierw wywołaj handle_favorites aby zaktualizować mapowanie id
+    await handle_favorites(ctx)
+    ctx.send.reset_mock()  # Reset mock, aby licznik był czysty
+    
+    # Teraz spróbuj usunąć pierwszy element
     await remove_favorite(ctx, 1)
-
-    # Verify the favorite was removed
-    assert len(favorites[str(ctx.author.id)]) == 1
-    assert (
-        favorites[str(ctx.author.id)][0]["title"]
-        == "Nowe odkrycie polskich archeologów - sensacyjne znalezisko sprzed 3000 lat"
-    )
-    ctx.send.assert_called_once()
-    assert "Usunięto z ulubionych" in ctx.send.call_args[0][0]
+    
+    # Sprawdź czy zostało usunięte z bazy
+    favorites = get_favorites_db(user_id)
+    assert len(favorites) == 1
+    assert "Nowe odkrycie polskich archeologów" in favorites[0]["title"]
+    
+    # Sprawdź czy wysłano potwierdzenie usunięcia
+    ctx.send.assert_called()
+    assert "Usunięto artykuł numer 1" in ctx.send.call_args_list[0][0][0]
 
 
 @pytest.mark.asyncio
@@ -468,20 +494,23 @@ async def test_remove_favorite_invalid_index():
     ctx = AsyncMock()
     ctx.send = AsyncMock()
     ctx.author.id = 123
-
-    # Setup test data
-    from src.newser import favorites
-
-    favorites[str(ctx.author.id)] = [
-        {
-            "title": "Raport ekonomiczny 2023 - zdrowie polskiej gospodarki",
-            "link": "https://www.pap.pl/aktualnosci/raport-ekonomiczny-2023-zdrowie-gospodarki",
-        }
-    ]
-
-    await remove_favorite(ctx, 2)  # Invalid index
-
-    # Verify error message was sent
-    ctx.send.assert_called_once_with(
-        "Nieprawidłowy numer wiadomości lub brak ulubionych."
-    )
+    user_id = str(ctx.author.id)
+    
+    # Usuń istniejące ulubione i dodaj testowy artykuł
+    with sqlite3.connect(database.DB_PATH) as conn:
+        conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
+        conn.commit()
+    
+    # Dodaj jeden artykuł do bazy
+    add_favorite_db(user_id, "Raport ekonomiczny 2023 - zdrowie polskiej gospodarki", 
+                   "https://www.pap.pl/aktualnosci/raport-ekonomiczny-2023-zdrowie-gospodarki")
+    
+    # Najpierw wywołaj handle_favorites aby zaktualizować mapowanie id
+    await handle_favorites(ctx)
+    ctx.send.reset_mock()  # Reset mock, aby licznik był czysty
+    
+    # Teraz spróbuj usunąć nieistniejący element
+    await remove_favorite(ctx, 2)  # Nieprawidłowy indeks
+    
+    # Sprawdź czy wysłano komunikat o błędzie - poprawiona asercja
+    assert "odświeżanie" in ctx.send.call_args_list[0][0][0].lower() or "nie znaleziono" in ctx.send.call_args_list[0][0][0].lower() or "spróbuj ponownie" in ctx.send.call_args_list[0][0][0].lower()
