@@ -7,12 +7,14 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 
 ## 🧩 Funkcje
 
-- `!news <temat>` – Wyszukuje najnowsze wiadomości
-- `!news redaguj <temat>` – Redaguje wiadomość za pomocą AI i dodaje link do źródła
-- `!news redaguj <numer>` – Redaguje wiadomość z ostatnio wyświetlonych wyników (1–3)
-- `!news dodaj <numer>` – Dodaje wskazaną wiadomość do ulubionych
-- `!news ulubione` – Wyświetla ulubione wiadomości
-- `!news help` – Wyświetla pomoc i instrukcję użycia
+- `!news <temat>` – Wyszukaj najnowsze wiadomości na dany temat (domyślnie 3 artykuły)
+- `!news <temat> [liczba]` – Wyszukaj określoną liczbę wiadomości (1–10) na dany temat
+- `!news redaguj <temat>` – Pobierz wiadomości i zredaguj ich treść za pomocą AI
+- `!news redaguj <numer>` – Zredaguj wiadomość z ostatnio wyświetlonych wyników
+- `!news dodaj <numer>` – Dodaj wskazaną wiadomość z listy do ulubionych
+- `!news usun <numer>` – Usuń wskazaną wiadomość z listy ulubionych
+- `!news ulubione` – Zobacz swoje zapisane ulubione wiadomości
+
 
 ---
 
@@ -58,6 +60,21 @@ pytest-trio
 pytest-twisted
 
 ```
+
+---
+
+## 🐳 Uruchomienie w Dockerze
+
+Jeśli chcesz uruchomić projekt w kontenerze Docker, wykonaj poniższe kroki:
+
+1. **Zbuduj obraz Dockera**:
+   ```bash
+   docker build -t newser-bot .
+   ```
+2. **Uruchom kontener**:
+   ```bash
+   docker run --env-file .env -d --name newser-container newser-bot
+   ```
 
 ---
 
