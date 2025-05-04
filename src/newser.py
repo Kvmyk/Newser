@@ -56,9 +56,9 @@ async def handle_help(ctx):
 async def edit_article(ctx, article):
     """Helper function to edit a single article using AI"""
     title = article.get("title", "")
-    content = article.get("content", "")
+    description = article.get("description", "")
     link = article.get("link", "")
-    prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {content} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie. Nie dodawaj żadnych wzmianek o subskrypcjach, płatnościach ani innych dodatkowych usługach."
+    prompt = f"Zredaguj tę wiadomość w bardziej przystępny i naturalny jeden sposób:\nTytuł: {title}\nOpis: {description} \n Opisz to w max 3 zdaniach, nie wypisuj tytułu. Pisz profesjonalnie."
     try:
         response = model.generate_content(prompt)
         await ctx.send(f"🎨 **Zredagowana wersja:**\n{response.text}\n🔗 {link}")
