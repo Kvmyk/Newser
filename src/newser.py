@@ -4,6 +4,7 @@ from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
+from db import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
@@ -20,8 +21,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents, heartbeat_timeout=60.0)
 
-# Pamięć ulubionych wiadomości (tymczasowo w RAM)
-favorites = {}
 # Pamięć ostatnich wiadomości na użytkownika
 last_articles = {}
 
@@ -83,10 +82,13 @@ async def handle_edit(ctx, clean_query):
 
 
 async def handle_favorites(ctx):
+    """Wyświetla ulubione artykuły użytkownika pobrane z bazy danych"""
     user_id = str(ctx.author.id)
-    if user_id in favorites and favorites[user_id]:
-        for i, fav in enumerate(favorites[user_id], 1):
-            await ctx.send(f"{i}. 🔖 **{fav['title']}**\n🔗 {fav['link']}")
+    favorites = get_favorites_db(user_id)
+
+    if favorites:
+        for item in favorites:
+            await ctx.send(f"{item['id']}. 🔖 **{item['title']}**\n🔗 {item['link']}")
     else:
         await ctx.send("Nie masz jeszcze żadnych ulubionych wiadomości.")
 
@@ -171,27 +173,34 @@ async def fetch_and_send_news(ctx, query):
 
 @bot.command(name="fav")
 async def add_favorite(ctx, index: int):
+    """Dodaje artykuł do ulubionych w bazie danych"""
     user_id = str(ctx.author.id)
     articles = last_articles.get(user_id, [])
+
     if 0 < index <= len(articles):
-        fav = articles[index - 1]
-        if user_id not in favorites:
-            favorites[user_id] = []
-        favorites[user_id].append(
-            {"title": fav.get("title", "Brak tytułu"), "link": fav.get("link", "")}
-        )
-        await ctx.send(f"Dodano do ulubionych: **{fav.get('title', '')}**")
+        article = articles[index - 1]
+        title = article.get("title", "Brak tytułu")
+        link = article.get("link", "")
+
+        # Zapisz w bazie danych
+        add_favorite_db(user_id, title, link)
+
+        await ctx.send(f"Dodano do ulubionych: **{title}**")
     else:
         await ctx.send("Nieprawidłowy numer wiadomości.")
 
 
 async def remove_favorite(ctx, index: int):
+    """Usuwa artykuł z ulubionych z bazy danych"""
     user_id = str(ctx.author.id)
-    if user_id in favorites and 0 < index <= len(favorites[user_id]):
-        removed_article = favorites[user_id].pop(index - 1)
-        await ctx.send(f"Usunięto z ulubionych: **{removed_article.get('title', '')}**")
+
+    # Usuń z bazy danych używając ID rekordu
+    success = remove_favorite_db(user_id, index)
+
+    if success:
+        await ctx.send(f"Usunięto artykuł o ID {index} z ulubionych.")
     else:
-        await ctx.send("Nieprawidłowy numer wiadomości lub brak ulubionych.")
+        await ctx.send(f"Nie znaleziono artykułu o ID {index} w Twoich ulubionych.")
 
 
 if __name__ == "__main__":
