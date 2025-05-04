@@ -7,7 +7,13 @@ from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
-from src.db.database import add_favorite_db, get_favorites_db, remove_favorite_db
+
+try:
+    # Najpierw próbuj import bezpośredni (gdy uruchamiamy newser.py bezpośrednio)
+    from db.database import add_favorite_db, get_favorites_db, remove_favorite_db
+except ImportError:
+    # Jeśli nie działa, użyj importu przez src (dla testów)
+    from src.db.database import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()

@@ -9,7 +9,7 @@ from src.db.database import (
     get_favorites_db,
     remove_favorite_db,
     DB_DIR,
-    DB_PATH,  # Dodano brakującą zmienną
+    DB_PATH,  
 )
 import src.db.database as database
 from unittest.mock import AsyncMock, MagicMock, patch
