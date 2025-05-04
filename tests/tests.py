@@ -9,7 +9,7 @@ from src.db.database import (
     get_favorites_db,
     remove_favorite_db,
     DB_DIR,
-    DB_PATH  # Dodano brakującą zmienną
+    DB_PATH,  # Dodano brakującą zmienną
 )
 import src.db.database as database
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -28,32 +28,32 @@ def test_db():
     # Tworzenie tymczasowego pliku bazy danych ze zmienioną nazwą dla każdego testu
     import tempfile
     import pathlib
-    
+
     # Zapisz oryginalne ustawienie ścieżki bazy danych
     original_db_path = database.DB_PATH
-    
+
     # Utwórz tymczasowy plik bazy danych
-    temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+    temp_db_file = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     test_db_path = pathlib.Path(temp_db_file.name)
     temp_db_file.close()
-    
+
     # Przekieruj ścieżkę bazy danych na tymczasowy plik
     database.DB_PATH = test_db_path
-    
+
     # Inicjalizuj bazę danych
     init_db()
-    
+
     # Zwróć ścieżkę do testów
     yield test_db_path
-    
+
     # Po zakończeniu testu przywróć oryginalną ścieżkę
     database.DB_PATH = original_db_path
-    
+
     # Usuń tymczasowy plik bazy danych
     if test_db_path.exists():
         try:
             os.remove(test_db_path)
-        except (OSError):
+        except OSError:
             pass  # Ignoruj błędy usuwania pliku
 
 
@@ -61,26 +61,26 @@ def test_db():
 async def test_database_article_operations(test_db):
     """Test operacji na artykułach w bazie danych"""
     user_id = "123456789"
-    
+
     # Testowy artykuł z aktualną tematyką
     test_article = {
         "title": "Nowy procesor M3 Ultra - Apple prezentuje przełomową technologię",
-        "link": "https://www.apple.com/newsroom/2024/m3-ultra-announcement"
+        "link": "https://www.apple.com/newsroom/2024/m3-ultra-announcement",
     }
-    
+
     # Dodanie artykułu
     add_favorite_db(user_id, test_article["title"], test_article["link"])
-    
+
     # Sprawdzenie czy artykuł został dodany
     favorites = get_favorites_db(user_id)
     assert len(favorites) == 1
     assert favorites[0]["title"] == test_article["title"]
     assert favorites[0]["link"] == test_article["link"]
-    
+
     # Usunięcie artykułu
     article_id = favorites[0]["id"]
     assert remove_favorite_db(user_id, article_id) == True
-    
+
     # Weryfikacja usunięcia
     assert len(get_favorites_db(user_id)) == 0
 
@@ -90,36 +90,36 @@ async def test_multiple_users_isolation(test_db):
     """Test izolacji danych między użytkownikami"""
     user1_id = "111222333"
     user2_id = "444555666"
-    
+
     # Dodanie artykułów dla różnych użytkowników
     test_articles = {
         user1_id: [
             {
                 "title": "Przełom w technologii kwantowej - polski naukowiec na czele projektu",
-                "link": "https://www.nauka.gov.pl/aktualnosci/przelom-kwantowy-2024"
+                "link": "https://www.nauka.gov.pl/aktualnosci/przelom-kwantowy-2024",
             },
             {
                 "title": "Nowa strategia cyberbezpieczeństwa UE na lata 2024-2030",
-                "link": "https://cybersecurity-europe.eu/strategy-2024"
-            }
+                "link": "https://cybersecurity-europe.eu/strategy-2024",
+            },
         ],
         user2_id: [
             {
                 "title": "SpaceX ogłasza pierwszą turystyczną misję na Marsa",
-                "link": "https://www.spacex.com/mars-mission-2024"
+                "link": "https://www.spacex.com/mars-mission-2024",
             }
-        ]
+        ],
     }
-    
+
     # Dodanie artykułów do bazy
     for user_id, articles in test_articles.items():
         for article in articles:
             add_favorite_db(user_id, article["title"], article["link"])
-    
+
     # Sprawdzenie izolacji danych
     user1_favorites = get_favorites_db(user1_id)
     user2_favorites = get_favorites_db(user2_id)
-    
+
     assert len(user1_favorites) == 2
     assert len(user2_favorites) == 1
     assert "kwantowej" in user1_favorites[0]["title"]
@@ -130,14 +130,14 @@ async def test_multiple_users_isolation(test_db):
 async def test_database_error_handling(test_db):
     """Test obsługi błędów bazy danych"""
     user_id = "999888777"
-    
+
     # Test usuwania nieistniejącego artykułu
     assert remove_favorite_db(user_id, 99999) == False
-    
+
     # Test dodawania artykułu z nieprawidłowymi danymi
     with pytest.raises(sqlite3.Error):
         add_favorite_db(None, None, None)
-    
+
     # Test pobierania dla nieistniejącego użytkownika
     empty_favorites = get_favorites_db("nonexistent_user")
     assert len(empty_favorites) == 0
@@ -147,22 +147,22 @@ async def test_database_error_handling(test_db):
 async def test_database_article_limits(test_db):
     """Test limitów i wydajności bazy danych"""
     user_id = "777666555"
-    
+
     # Dodanie większej liczby artykułów
     for i in range(100):
         title = f"Artykuł testowy {i}: Najnowsze trendy w AI {i+1}/2024"
         link = f"https://ai-news.com/trends-{i}-2024"
         add_favorite_db(user_id, title, link)
-    
+
     # Sprawdzenie poprawności zapisanych danych
     favorites = get_favorites_db(user_id)
     assert len(favorites) == 100
     assert all("Artykuł testowy" in f["title"] for f in favorites)
-    
+
     # Test wydajności usuwania
     for favorite in favorites[:50]:
         assert remove_favorite_db(user_id, favorite["id"]) == True
-    
+
     # Weryfikacja pozostałych artykułów
     remaining = get_favorites_db(user_id)
     assert len(remaining) == 50
@@ -287,10 +287,10 @@ async def test_add_favorite():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
-    
+
     # Przygotowanie danych testowych
     from src.newser import last_articles
-    
+
     last_articles[user_id] = [
         {
             "title": "PKB Polski wzrósł o 3,5% w pierwszym kwartale 2023",
@@ -301,15 +301,15 @@ async def test_add_favorite():
             "link": "https://www.tvn24.pl/wiadomosci-ze-swiata,2/kolejne-rozmowy-pokojowe,1280564.html",
         },
     ]
-    
+
     # Usuń wszystkie dotychczasowe ulubione z bazy danych
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
         conn.commit()
-    
+
     # Wykonaj test
     await add_favorite(ctx, 1)
-    
+
     # Sprawdź czy zostało dodane do bazy danych
     favorites = get_favorites_db(user_id)
     assert len(favorites) == 1
@@ -363,14 +363,14 @@ async def test_handle_favorites_empty():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
-    
+
     # Usuń wszystkie ulubione z bazy dla tego użytkownika
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
         conn.commit()
-    
+
     await handle_favorites(ctx)
-    
+
     # Sprawdź czy wyświetlono komunikat o braku ulubionych
     ctx.send.assert_called_once_with("Nie masz jeszcze żadnych ulubionych wiadomości.")
 
@@ -381,22 +381,30 @@ async def test_handle_favorites_with_items():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
-    
+
     # Usuń istniejące ulubione i dodaj testowe artykuły
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
         conn.commit()
-    
-    add_favorite_db(user_id, "Nowy projekt ustawy o ochronie środowiska - co się zmieni?", 
-                   "https://www.rp.pl/polityka/art39087981-nowy-projekt-ustawy")
-    add_favorite_db(user_id, "Reforma edukacji 2023 - najważniejsze zmiany dla uczniów i nauczycieli", 
-                   "https://www.newsweek.pl/polska/spoleczenstwo/reforma-edukacji-2023/4n8xjlp")
-    
+
+    add_favorite_db(
+        user_id,
+        "Nowy projekt ustawy o ochronie środowiska - co się zmieni?",
+        "https://www.rp.pl/polityka/art39087981-nowy-projekt-ustawy",
+    )
+    add_favorite_db(
+        user_id,
+        "Reforma edukacji 2023 - najważniejsze zmiany dla uczniów i nauczycieli",
+        "https://www.newsweek.pl/polska/spoleczenstwo/reforma-edukacji-2023/4n8xjlp",
+    )
+
     await handle_favorites(ctx)
-    
+
     # Sprawdź czy wyświetlono oba artykuły
     assert ctx.send.call_count == 2
-    assert "Nowy projekt ustawy o ochronie środowiska" in ctx.send.call_args_list[0][0][0]
+    assert (
+        "Nowy projekt ustawy o ochronie środowiska" in ctx.send.call_args_list[0][0][0]
+    )
     assert "Reforma edukacji 2023" in ctx.send.call_args_list[1][0][0]
 
 
@@ -460,30 +468,36 @@ async def test_remove_favorite():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
-    
+
     # Usuń istniejące ulubione i dodaj testowe artykuły
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
         conn.commit()
-    
+
     # Dodaj dwa artykuły do bazy
-    add_favorite_db(user_id, "Rozwój sztucznej inteligencji w Polsce - raport ministerstwa cyfryzacji", 
-                   "https://www.pb.pl/technologie/rozwoj-sztucznej-inteligencji-w-polsce,1548321")
-    add_favorite_db(user_id, "Nowe odkrycie polskich archeologów - sensacyjne znalezisko sprzed 3000 lat", 
-                   "https://www.naukawpolsce.pl/aktualnosci/news,96325,nowe-odkrycie-polskich-archeologow.html")
-    
+    add_favorite_db(
+        user_id,
+        "Rozwój sztucznej inteligencji w Polsce - raport ministerstwa cyfryzacji",
+        "https://www.pb.pl/technologie/rozwoj-sztucznej-inteligencji-w-polsce,1548321",
+    )
+    add_favorite_db(
+        user_id,
+        "Nowe odkrycie polskich archeologów - sensacyjne znalezisko sprzed 3000 lat",
+        "https://www.naukawpolsce.pl/aktualnosci/news,96325,nowe-odkrycie-polskich-archeologow.html",
+    )
+
     # Najpierw wywołaj handle_favorites aby zaktualizować mapowanie id
     await handle_favorites(ctx)
     ctx.send.reset_mock()  # Reset mock, aby licznik był czysty
-    
+
     # Teraz spróbuj usunąć pierwszy element
     await remove_favorite(ctx, 1)
-    
+
     # Sprawdź czy zostało usunięte z bazy
     favorites = get_favorites_db(user_id)
     assert len(favorites) == 1
     assert "Nowe odkrycie polskich archeologów" in favorites[0]["title"]
-    
+
     # Sprawdź czy wysłano potwierdzenie usunięcia
     ctx.send.assert_called()
     assert "Usunięto artykuł numer 1" in ctx.send.call_args_list[0][0][0]
@@ -495,22 +509,29 @@ async def test_remove_favorite_invalid_index():
     ctx.send = AsyncMock()
     ctx.author.id = 123
     user_id = str(ctx.author.id)
-    
+
     # Usuń istniejące ulubione i dodaj testowy artykuł
     with sqlite3.connect(database.DB_PATH) as conn:
         conn.execute("DELETE FROM favorites WHERE user_id = ?", (user_id,))
         conn.commit()
-    
+
     # Dodaj jeden artykuł do bazy
-    add_favorite_db(user_id, "Raport ekonomiczny 2023 - zdrowie polskiej gospodarki", 
-                   "https://www.pap.pl/aktualnosci/raport-ekonomiczny-2023-zdrowie-gospodarki")
-    
+    add_favorite_db(
+        user_id,
+        "Raport ekonomiczny 2023 - zdrowie polskiej gospodarki",
+        "https://www.pap.pl/aktualnosci/raport-ekonomiczny-2023-zdrowie-gospodarki",
+    )
+
     # Najpierw wywołaj handle_favorites aby zaktualizować mapowanie id
     await handle_favorites(ctx)
     ctx.send.reset_mock()  # Reset mock, aby licznik był czysty
-    
+
     # Teraz spróbuj usunąć nieistniejący element
     await remove_favorite(ctx, 2)  # Nieprawidłowy indeks
-    
+
     # Sprawdź czy wysłano komunikat o błędzie - poprawiona asercja
-    assert "odświeżanie" in ctx.send.call_args_list[0][0][0].lower() or "nie znaleziono" in ctx.send.call_args_list[0][0][0].lower() or "spróbuj ponownie" in ctx.send.call_args_list[0][0][0].lower()
+    assert (
+        "odświeżanie" in ctx.send.call_args_list[0][0][0].lower()
+        or "nie znaleziono" in ctx.send.call_args_list[0][0][0].lower()
+        or "spróbuj ponownie" in ctx.send.call_args_list[0][0][0].lower()
+    )

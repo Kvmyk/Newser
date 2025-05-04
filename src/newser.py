@@ -4,7 +4,7 @@ from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
-from db import add_favorite_db, get_favorites_db, remove_favorite_db
+from src.db import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
@@ -88,16 +88,16 @@ async def handle_favorites(ctx):
     """Wyświetla ulubione artykuły użytkownika pobrane z bazy danych"""
     user_id = str(ctx.author.id)
     favorites = get_favorites_db(user_id)
-    
+
     # Tworzymy nowe mapowanie dla tego użytkownika
     favorite_id_mapping[user_id] = {}
-    
+
     if favorites:
         # Wyświetlamy artykuły z numeracją od 1
         for i, item in enumerate(favorites, 1):
             # Zapisujemy mapowanie: numer wyświetlany -> ID z bazy
-            favorite_id_mapping[user_id][i] = item['id']
-            
+            favorite_id_mapping[user_id][i] = item["id"]
+
             await ctx.send(f"{i}. 🔖 **{item['title']}**\n🔗 {item['link']}")
     else:
         await ctx.send("Nie masz jeszcze żadnych ulubionych wiadomości.")
@@ -203,7 +203,7 @@ async def add_favorite(ctx, index: int):
 async def remove_favorite(ctx, index: int):
     """Usuwa artykuł z ulubionych z bazy danych"""
     user_id = str(ctx.author.id)
-    
+
     # Sprawdź czy użytkownik ma zmapowane ID
     if user_id not in favorite_id_mapping or index not in favorite_id_mapping[user_id]:
         # Jeśli nie ma mapowania, odśwież listę i poinformuj użytkownika
@@ -211,10 +211,10 @@ async def remove_favorite(ctx, index: int):
         await handle_favorites(ctx)
         await ctx.send("Spróbuj ponownie z numerem z powyższej listy.")
         return
-    
+
     # Pobierz prawdziwe ID z bazy danych na podstawie numeru użytkownika
     db_id = favorite_id_mapping[user_id][index]
-    
+
     # Usuń z bazy danych używając rzeczywistego ID
     success = remove_favorite_db(user_id, db_id)
 
