@@ -59,6 +59,8 @@ pytest-twisted
 
 ```
 
+---
+
 ## 🐳 Uruchomienie w Dockerze
 
 Jeśli chcesz uruchomić projekt w kontenerze Docker, wykonaj poniższe kroki:
