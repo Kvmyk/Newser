@@ -59,6 +59,19 @@ pytest-twisted
 
 ```
 
+## 🐳 Uruchomienie w Dockerze
+
+Jeśli chcesz uruchomić projekt w kontenerze Docker, wykonaj poniższe kroki:
+
+1. **Zbuduj obraz Dockera**:
+   ```bash
+   docker build -t newser-bot .
+   ```
+2. **Uruchom kontener**:
+   ```bash
+   docker run --env-file .env -d --name newser-container newser-bot
+   ```
+
 ---
 
 ## 🧠 Wykorzystywane API
