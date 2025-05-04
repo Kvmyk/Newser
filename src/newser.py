@@ -1,10 +1,12 @@
 import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import discord
 from discord.ext import commands
 import requests
 from dotenv import load_dotenv
 import google.generativeai as genai
-from src.db import add_favorite_db, get_favorites_db, remove_favorite_db
+from src.db.database import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
