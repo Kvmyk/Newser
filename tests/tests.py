@@ -3,7 +3,7 @@ import sqlite3
 import pathlib
 import os
 from datetime import datetime
-from src.db.database import (
+from src.database import (
     init_db,
     add_favorite_db,
     get_favorites_db,
@@ -11,7 +11,7 @@ from src.db.database import (
     DB_DIR,
     DB_PATH,
 )
-import src.db.database as database
+import src.database as database
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.newser import (
     fetch_news,

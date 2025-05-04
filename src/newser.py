@@ -10,10 +10,10 @@ import google.generativeai as genai
 
 try:
     # Najpierw próbuj import bezpośredni (gdy uruchamiamy newser.py bezpośrednio)
-    from db.database import add_favorite_db, get_favorites_db, remove_favorite_db
+    from src.database import add_favorite_db, get_favorites_db, remove_favorite_db
 except ImportError:
     # Jeśli nie działa, użyj importu przez src (dla testów)
-    from src.db.database import add_favorite_db, get_favorites_db, remove_favorite_db
+    from src.database import add_favorite_db, get_favorites_db, remove_favorite_db
 
 # Załaduj zmienne środowiskowe
 load_dotenv()
