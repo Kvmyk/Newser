@@ -53,7 +53,7 @@ def test_db():
     if test_db_path.exists():
         try:
             os.remove(test_db_path)
-        except (PermissionError, OSError):
+        except (OSError):
             pass  # Ignoruj błędy usuwania pliku
 
 
