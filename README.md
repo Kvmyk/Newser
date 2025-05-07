@@ -78,6 +78,44 @@ Jeśli chcesz uruchomić projekt w kontenerze Docker, wykonaj poniższe kroki:
 
 ---
 
+## 🤖 Automatyzacja z Azure Pipelines
+
+Projekt zawiera skonfigurowany plik `azure-pipelines.yml`, który umożliwia automatyzację procesów CI/CD. Dzięki temu możesz:
+
+1. **Uruchamiać testy jednostkowe i sprawdzać formatowanie kodu**:
+   - Testy są uruchamiane za pomocą `pytest`.
+   - Formatowanie kodu jest sprawdzane za pomocą `black`.
+
+2. **Budować obraz Dockera**:
+   - Obraz Dockera jest tworzony i oznaczany unikalnym tagiem.
+
+3. **Publikować obraz Dockera**:
+   - Obraz jest przesyłany do zarejestrowanego rejestru kontenerów (np. Docker Hub).
+
+4. **Wdrażać aplikację**:
+   - Kontener Dockera jest uruchamiany na podstawie obrazu z rejestru.
+   - Możesz wybrać operację wdrożenia: `Install`, `Uninstall`, `Reinstall`.
+
+### 🚀 Jak skonfigurować Azure Pipelines?
+
+1. **Dodaj plik `azure-pipelines.yml` do repozytorium**:
+   Plik znajduje się już w katalogu projektu i jest gotowy do użycia.
+
+2. **Skonfiguruj zmienne środowiskowe w Azure Pipelines**:
+   - `DISCORD_TOKEN`: Twój token bota Discord.
+   - `NEWSDATA_API_KEY`: Klucz API z NewsData.io.
+   - `GOOGLE_API_KEY`: Klucz API z Google Generative AI.
+
+3. **Uruchom pipeline**:
+   - Pipeline automatycznie uruchomi się na gałęziach `main` i `develop`.
+
+4. **Monitoruj wyniki**:
+   - Wyniki testów i procesów budowania są dostępne w Azure DevOps.
+
+Dzięki tej konfiguracji możesz łatwo zarządzać procesem budowania, testowania i wdrażania swojego bota! 🛠️✨
+
+---
+
 ## 🧠 Wykorzystywane API
 
 - [NewsData.io](https://newsdata.io) – agregator wiadomości z całego świata
