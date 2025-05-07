@@ -144,8 +144,7 @@ Dzięki tej konfiguracji możesz łatwo zarządzać procesem budowania, testowan
 
 ## 💾 Informacje o danych
 
-- Dane ulubionych wiadomości i ostatnich wyników są przechowywane tymczasowo w pamięci.
-- Po restarcie bota ulubione artykuły znikają.
+- Dane ulubionych wiadomości i ostatnich wyników są przechowywane w bazie danych
 
 ---
 
