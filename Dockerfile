@@ -9,11 +9,8 @@ WORKDIR /Newser
 COPY --from=builder /root/.local /root/.local
 ENV PATH=/root/.local/bin:$PATH
 
-# Skopiuj cały projekt do kontenera
 COPY . .
 
-# Ustaw PYTHONPATH, aby Python widział katalog `src` jako moduł
 ENV PYTHONPATH=/Newser/src
 
-# Uruchom aplikację
 CMD ["python", "src/newser.py"]
