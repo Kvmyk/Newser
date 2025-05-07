@@ -4,7 +4,7 @@ from datetime import datetime
 import pathlib
 
 # Ścieżka do katalogu z bazą danych
-DB_DIR = pathlib.Path(__file__).parent.parent.parent / "data"
+DB_DIR = pathlib.Path(__file__).parent.parent / "data"
 DB_PATH = DB_DIR / "newser.db"
 
 # Upewniamy się, że katalog istnieje
