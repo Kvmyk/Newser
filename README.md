@@ -15,7 +15,6 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 - `!news usun <numer>` – Usuń wskazaną wiadomość z listy ulubionych
 - `!news ulubione` – Zobacz swoje zapisane ulubione wiadomości
 
-
 ---
 
 ## 🚀 Jak uruchomić
@@ -130,8 +129,6 @@ Projekt zawiera skonfigurowany plik `azure-pipelines.yml`, który umożliwia aut
 
 4. **Monitoruj wyniki**:
    - Wyniki testów i procesów budowania są dostępne w Azure DevOps.
-
-Dzięki tej konfiguracji możesz łatwo zarządzać procesem budowania, testowania i wdrażania swojego bota! 🛠️✨
 
 ---
 
