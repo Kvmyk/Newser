@@ -11,7 +11,7 @@ from src.database import add_favorite_db, get_favorites_db, remove_favorite_db, 
 
 init_db()
 
-# Załaduj zmienne środowiskowe
+# zmienne środowiskowe
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 NEWSDATA_API_KEY = os.getenv("NEWSDATA_API_KEY")
@@ -94,13 +94,13 @@ async def handle_favorites(ctx):
     user_id = str(ctx.author.id)
     favorites = get_favorites_db(user_id)
 
-    # Tworzymy nowe mapowanie dla tego użytkownika
+    # nowe mapowanie dla tego użytkownika
     favorite_id_mapping[user_id] = {}
 
     if favorites:
-        # Wyświetlamy artykuły z numeracją od 1
+        # Wyświetlanie artykułów z numeracją od 1
         for i, item in enumerate(favorites, 1):
-            # Zapisujemy mapowanie: numer wyświetlany -> ID z bazy
+            # Zapisywania mapowania: numer wyświetlany -> ID z bazy
             favorite_id_mapping[user_id][i] = item["id"]
 
             await ctx.send(f"{i}. 🔖 **{item['title']}**\n🔗 {item['link']}")
@@ -129,6 +129,8 @@ async def fetch_news(ctx, *, query: str = None):
         "help": handle_help,
         "ulubione": handle_favorites,
     }
+
+    # Sprawdzanie czy zapytanie to jedna z komend
 
     if query.lower() in command_handlers:
         await command_handlers[query.lower()](ctx)
@@ -164,10 +166,10 @@ async def fetch_news(ctx, *, query: str = None):
 
 
 async def fetch_and_send_news(ctx, query):
-    # Sprawdź czy w zapytaniu jest liczba artykułów
+    """Pobiera wiadomości z API i wysyła je do kanału"""
     parts = query.split()
     if len(parts) > 1 and parts[-1].isdigit():
-        article_count = min(max(1, int(parts[-1])), 10)  # Ogranicz do zakresu 1-10
+        article_count = min(max(1, int(parts[-1])), 10)  
         search_query = " ".join(parts[:-1])
     else:
         article_count = 3  # Domyślna liczba artykułów
@@ -206,7 +208,7 @@ async def add_favorite(ctx, index: int):
         title = article.get("title", "Brak tytułu")
         link = article.get("link", "")
 
-        # Zapisz w bazie danych
+        # Zapisywanie w bazie danych
         add_favorite_db(user_id, title, link)
 
         await ctx.send(f"Dodano do ulubionych: **{title}**")
@@ -218,9 +220,9 @@ async def remove_favorite(ctx, index: int):
     """Usuwa artykuł z ulubionych z bazy danych"""
     user_id = str(ctx.author.id)
 
-    # Sprawdź czy użytkownik ma zmapowane ID
+    # Sprawdzanie czy użytkownik ma zmapowane ID
     if user_id not in favorite_id_mapping or index not in favorite_id_mapping[user_id]:
-        # Jeśli nie ma mapowania, odśwież listę i poinformuj użytkownika
+        # Jeśli nie ma mapowania, to odświeżamy listę i poinformujemy użytkownika
         await ctx.send("Odświeżanie listy ulubionych...")
         await handle_favorites(ctx)
         await ctx.send("Spróbuj ponownie z numerem z powyższej listy.")
