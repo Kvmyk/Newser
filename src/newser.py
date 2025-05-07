@@ -112,7 +112,7 @@ async def handle_favorites(ctx):
 async def fetch_news(ctx, *, query: str = None):
     if not query:
         await ctx.send(
-                    """
+            """
 **Pomoc - Komendy !news:**
 `!news <temat>` - Wyszukaj najnowsze wiadomości na dany temat (domyślnie 3 artykuły).
 `!news <temat> [liczba]` - Wyszukaj określoną liczbę wiadomości (1-10) na dany temat.
