@@ -26,7 +26,7 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
    cd Newser
    ```
 
-2. **Utwórz plik `.env`** w katalogu `newser-bot` z taką zawartością:
+2. **Utwórz plik `.env`** w katalogu `newser-bot` z taką zawartością, albo skorzystaj z pliku `.env-template` dostępnego w repozytorium:
    ```env
    DISCORD_TOKEN=twoj_token_z_discorda
    NEWSDATA_API_KEY=twoj_klucz_z_newsdata.io
