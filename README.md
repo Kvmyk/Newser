@@ -45,6 +45,25 @@ Bot Discordowy, który pobiera najnowsze wiadomości z [NewsData.io](https://new
 
 ---
 
+## 🗂️ Plik `.env-template`
+
+W projekcie znajduje się plik `.env-template`, który możesz wykorzystać jako wzór do stworzenia własnego pliku `.env`. Plik ten zawiera wszystkie wymagane zmienne środowiskowe, które należy uzupełnić przed uruchomieniem bota.
+
+### Jak użyć `.env-template`?
+
+1. Skopiuj plik `.env-template` i zmień jego nazwę na `.env`:
+   ```bash
+   cp .env-template .env
+   ```
+2. Uzupełnij wartości zmiennych w pliku .env:
+   ```
+   DISCORD_TOKEN=twój_token_z_discorda
+   NEWSDATA_API_KEY=twój_klucz_z_newsdata.io
+   GOOGLE_API_KEY=twój_klucz_z_google_generative_ai
+   ```
+3. Upewnij się, że plik .env znajduje się w katalogu głównym projektu.
+---
+
 ## 📦 Wymagane zależności
 
 Plik `requirements.txt` powinien zawierać:
