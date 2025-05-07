@@ -19,7 +19,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Konfiguracja Gemini (Google Generative AI)
 genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel(model_name="models/gemini-2.5-flash-preview-04-17")
+model = genai.GenerativeModel(model_name="models/gemini-2.0-flash")
 
 # Intencje i prefiks
 intents = discord.Intents.default()
@@ -112,7 +112,16 @@ async def handle_favorites(ctx):
 async def fetch_news(ctx, *, query: str = None):
     if not query:
         await ctx.send(
-            "Użycie: `!news <temat>` | `!news <temat> [liczba]` | `!news help` | `!news redaguj` | `!news ulubione` | `!news dodaj <numer>` | `!news usun <numer>`"
+                    """
+**Pomoc - Komendy !news:**
+`!news <temat>` - Wyszukaj najnowsze wiadomości na dany temat (domyślnie 3 artykuły).
+`!news <temat> [liczba]` - Wyszukaj określoną liczbę wiadomości (1-10) na dany temat.
+`!news redaguj <temat>` - Pobierz wiadomości i zredaguj ich treść za pomocą AI.
+`!news redaguj <numer>` - Zredaguj wiadomość z ostatnio wyświetlonych wyników.
+`!news ulubione` - Zobacz swoje zapisane ulubione wiadomości.
+`!news dodaj <numer>` - Dodaj wskazaną wiadomość z listy do ulubionych.
+`!news usun <numer>` - Usuń wskazaną wiadomość z listy ulubionych.
+"""
         )
         return
 
