@@ -169,7 +169,7 @@ async def fetch_and_send_news(ctx, query):
     """Pobiera wiadomości z API i wysyła je do kanału"""
     parts = query.split()
     if len(parts) > 1 and parts[-1].isdigit():
-        article_count = min(max(1, int(parts[-1])), 10)  
+        article_count = min(max(1, int(parts[-1])), 10)
         search_query = " ".join(parts[:-1])
     else:
         article_count = 3  # Domyślna liczba artykułów
