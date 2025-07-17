@@ -1,0 +1,136 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      buildImage:
+        description: 'Build Docker Image'
+        required: true
+        default: true
+        type: boolean
+      deployOperation:
+        description: 'Deployment Operation'
+        required: true
+        default: 'Reinstall'
+        type: choice
+        options:
+          - Install
+          - Uninstall
+          - Reinstall
+
+env:
+  PYTHON_VERSION: '3.12'
+  DOCKER_IMAGE_NAME: 'newser-bot'
+  DOCKER_REGISTRY: 'kuba7331'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black
+
+      - name: Run unit tests
+        run: |
+          pytest --junitxml=test-results.xml
+
+      - name: Run code formatting check with black
+        run: |
+          black --check .
+        continue-on-error: true
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results
+          path: test-results.xml
+          reporter: java-junit
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    if: ${{ success() && (github.event.inputs.buildImage == 'true' || github.event.inputs.buildImage == true || github.event_name != 'workflow_dispatch') }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
+            ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy Application
+    runs-on: self-hosted
+    needs: build
+    if: ${{ success() && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Deploy Docker Container
+        run: |
+          # Deployment logic based on selected operation
+          DEPLOY_OPERATION="${{ github.event.inputs.deployOperation }}"
+          
+          # Default to Reinstall if not specified (for push events)
+          if [ -z "$DEPLOY_OPERATION" ]; then
+            DEPLOY_OPERATION="Reinstall"
+          fi
+          
+          echo "Deploy operation: $DEPLOY_OPERATION"
+          
+          if [ "$DEPLOY_OPERATION" == "Uninstall" ] || [ "$DEPLOY_OPERATION" == "Reinstall" ]; then
+            echo "Stopping and removing existing container..."
+            docker stop newser-bot || true
+            docker rm newser-bot || true
+          fi
+          
+          if [ "$DEPLOY_OPERATION" == "Install" ] || [ "$DEPLOY_OPERATION" == "Reinstall" ]; then
+            echo "Starting new container..."
+            docker run -d --name newser-bot \
+              -e DISCORD_TOKEN="${{ secrets.DISCORD_TOKEN }}" \
+              -e NEWSDATA_API_KEY="${{ secrets.NEWSDATA_API_KEY }}" \
+              -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+              ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.run_number }}
+          fi
+        shell: bash
